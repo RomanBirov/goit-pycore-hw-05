@@ -17,7 +17,8 @@ def input_error(func):
 
 @input_error
 def add_contact(args, contacts):
-    name, phone = args
+    # waiting for: [name, phone]
+    name, phone = args  # кине ValueError якщо не 2 аргументи
     if name in contacts:
         return "This contact already exists. Use 'change' to update."
     contacts[name] = phone
@@ -26,6 +27,7 @@ def add_contact(args, contacts):
 
 @input_error
 def change_contact(args, contacts):
+    # waiting for: [name, phone]
     name, phone = args
     if name not in contacts:
         raise KeyError
@@ -35,6 +37,7 @@ def change_contact(args, contacts):
 
 @input_error
 def show_phone(args, contacts):
+    # waiting for: [name]
     name = args[0]
     if name not in contacts:
         raise KeyError
@@ -45,39 +48,49 @@ def show_phone(args, contacts):
 def show_all(contacts):
     if not contacts:
         return "No contacts found."
-    result = []
-    for name, phone in contacts.items():
-        result.append(f"{name}: {phone}")
-    return "\n".join(result)
+    return "\n".join(f"{name}: {phone}" for name, phone in contacts.items())
+
+
+def parse_input(line: str):
+    """Повертає (command, args_list). Напр.: 'add Bob 123' -> ('add', ['Bob','123'])"""
+    parts = line.strip().split()
+    if not parts:
+        return "", []
+    cmd, *args = parts
+    return cmd.lower(), args
 
 
 def main():
     contacts = {}
 
     print("Welcome to the assistant bot!")
-    print("Available commands: add, change, phone, all, exit")
+    print("Available commands: add, change, phone, all, exit/close, hello")
 
     while True:
-        command = input("Enter a command: ").strip().lower()
+        raw = input("Enter a command: ")
+        command, args = parse_input(raw)
 
-        if command == "exit":
+        if command in ("exit", "close"):
             print("Good bye!")
             break
 
-        elif command == "close":
-            print("Good bye!")
-            break
+        elif command == "hello":
+            print("How can I help you?")
 
         elif command == "add":
-            args = input("Enter name and phone: ").split()
+            # якщо аргументів немає — попросимо їх окремо
+            if not args:
+                args = input("Enter name and phone: ").split()
             print(add_contact(args, contacts))
 
         elif command == "change":
-            args = input("Enter name and new phone: ").split()
+            if not args:
+                args = input("Enter name and new phone: ").split()
             print(change_contact(args, contacts))
 
         elif command == "phone":
-            args = input("Enter user name: ").split()
+            if not args:
+                args = input("Enter user name: ").split()
             print(show_phone(args, contacts))
 
         elif command == "all":
